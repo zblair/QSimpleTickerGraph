@@ -1,0 +1,7 @@
+#!/bin/bash
+style="--style=ansi --lineend=linux --min-conditional-indent=0"
+options="--pad-header --unpad-paren --suffix=none"
+
+astyle $style $options *.cpp
+astyle $style $options *.h
+

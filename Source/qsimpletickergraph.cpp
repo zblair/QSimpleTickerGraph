@@ -7,9 +7,12 @@ const int DEFAULT_FONT_SIZE = 12;
 
 QSimpleTickerGraph::QSimpleTickerGraph(QWidget *parent) : QWidget(parent),
     mDataCount(0),
-    mFontSize(DEFAULT_FONT_SIZE),
     mMin(0),
-    mMax(100)
+    mMax(100),
+    mBackgroundBrush(QBrush(Qt::white)),
+    mGridPen(QColor(0, 128, 64)),
+    mDataLinePen(QColor(0, 255, 0)),
+    mLabelFont("Arial", DEFAULT_FONT_SIZE)
 {
 }
 
@@ -18,36 +21,42 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
     QPainter painter(this);
 
     // Draw the background
-    painter.setBrush(QBrush(Qt::white));
+    painter.setBrush(mBackgroundBrush);
     painter.fillRect(rect(), Qt::SolidPattern);
 
-    // Draw the graph lines
-    painter.setPen(QColor(0, 128, 64));
-    for (int x = -mDataCount % GRAPH_GRID_PITCH; x < width(); x += GRAPH_GRID_PITCH)
+    // Draw the grid lines
+    painter.setPen(mGridPen);
+    for (int x = -mDataCount % GRAPH_GRID_PITCH;
+         x < width();
+         x += GRAPH_GRID_PITCH)
         painter.drawLine(QPointF(x, 0), QPoint(x, height()));
 
-    for (int y = 0; y < height(); y += GRAPH_GRID_PITCH)
+    for (int y = 0;
+         y < height();
+         y += GRAPH_GRID_PITCH)
         painter.drawLine(QPointF(0, y), QPoint(width(), y));
 
     double scale = height() / (mMax - mMin);
 
-    // Draw the data
-    painter.setPen(QColor(0, 255, 0));
-    for (int i = 1; i < mData.size(); i++)
+    // Draw the data lines
+    painter.setPen(mDataLinePen);
+    for (int i = 1;
+         i < mData.size();
+         i++)
     {
         double prev = height() - scale * (mData.at(i-1) - mMin);
         double val = height() - scale * (mData.at(i) - mMin);
         painter.drawLine(QPointF(width() - mData.size() + i-1, prev), QPointF(width() - mData.size() + i, val));
     }
 
-    // Draw the value
+    // Draw the current value as text
     if (!mData.isEmpty())
     {
         QString current = QString("%1 %2")
                           .arg(mData.last(), 3, 'f', 3)
                           .arg(mUnits);
         painter.setPen(Qt::white);
-        painter.setFont(QFont("Arial", mFontSize));
+        painter.setFont(mLabelFont);
         painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignTop | Qt::AlignLeft, current);
     }
 }
@@ -84,23 +93,70 @@ QString QSimpleTickerGraph::units() const
     return mUnits;
 }
 
-void QSimpleTickerGraph::setFontSize(int size)
+void QSimpleTickerGraph::setRange(double min, double max)
 {
-    if (size != mFontSize)
+    if (min != mMin || max != mMax)
     {
-        mFontSize = size;
+        mMin = min;
+        mMax = max;
         if (!mData.isEmpty())
             update();
     }
 }
 
-int QSimpleTickerGraph::fontSize() const
+QPair<double, double> QSimpleTickerGraph::range() const
 {
-    return mFontSize;
+    return QPair<double, double>(mMin, mMax);
 }
 
-void QSimpleTickerGraph::setRange(double min, double max)
+void QSimpleTickerGraph::setBackgroundBrush(const QBrush& brush)
 {
-    mMin = min;
-    mMax = max;
+    if (brush != mBackgroundBrush)
+    {
+        mBackgroundBrush = brush;
+        update();
+    }
+}
+QBrush QSimpleTickerGraph::backgroundBrush() const
+{
+    return mBackgroundBrush;
+}
+
+void QSimpleTickerGraph::setGridPen(const QPen& pen)
+{
+    if (pen != mGridPen)
+    {
+        mGridPen = pen;
+        update();
+    }
+}
+QPen QSimpleTickerGraph::gridPen() const
+{
+    return mGridPen;
+}
+void QSimpleTickerGraph::setDataLinePen(const QPen& pen)
+{
+    if (pen != mDataLinePen)
+    {
+        mDataLinePen = pen;
+        if (!mData.isEmpty())
+            update();
+    }
+}
+QPen QSimpleTickerGraph::dataLinePen() const
+{
+    return mDataLinePen;
+}
+void QSimpleTickerGraph::setLabelFont(const QFont& font)
+{
+    if (font != mLabelFont)
+    {
+        mLabelFont = font;
+        if (!mData.isEmpty())
+            update();
+    }
+}
+QFont QSimpleTickerGraph::labelFont() const
+{
+    return mLabelFont;
 }

@@ -17,20 +17,27 @@ public:
     void paintEvent(QPaintEvent* pEvent);
 
     // Data-related parameters
-    void setUnits(const QString& unit);
     QString units() const;
-    void setRange(double min, double max);
+    void setUnits(const QString& unit);
+
     QPair<double, double> range() const;
+    void setRange(double min, double max);
 
     // Style-related parameters
-    void setBackgroundBrush(const QBrush& brush);
     QBrush backgroundBrush() const;
-    void setGridPen(const QPen& pen);
+    void setBackgroundBrush(const QBrush& brush);
+
     QPen gridPen() const;
-    void setDataLinePen(const QPen& pen);
+    void setGridPen(const QPen& pen);
+
+    int gridPitch() const;
+    void setGridPitch(int pitch);
+
     QPen dataLinePen() const;
-    void setLabelFont(const QFont& font);
+    void setDataLinePen(const QPen& pen);
+
     QFont labelFont() const;
+    void setLabelFont(const QFont& font);
 
     // Adding/clearing data points
     void appendPoint(double point);
@@ -49,6 +56,7 @@ private:
     // Style
     QBrush mBackgroundBrush;
     QPen mGridPen;
+    int mGridPitch;
     QPen mDataLinePen;
     QFont mLabelFont;
 };

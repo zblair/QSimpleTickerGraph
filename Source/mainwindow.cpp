@@ -18,6 +18,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // Configure the graphs
     mUi->voltageGraph->setUnits("V");
     mUi->voltageGraph->setRange(0, 200);
+    mUi->voltageGraph->setDataLinePen(QPen(QColor(255,255,0), 5));
+    mUi->voltageGraph->setBackgroundBrush(QBrush(QColor(32, 32, 32)));
+    mUi->voltageGraph->setGridPen(QPen(QColor(32, 128, 32), 1, Qt::DotLine));
 
     mUi->temperatureGraph->setUnits("°C");
     mUi->temperatureGraph->setRange(10, 30);

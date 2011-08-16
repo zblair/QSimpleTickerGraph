@@ -1,52 +1,56 @@
 #include <QtGui/QPainter>
 #include "qsimpletickergraph.h"
 
-const int GRAPH_GRID_PITCH = 10;
-const int LABEL_MARGIN = 2;
+const int DEFAULT_MIN = 0;
+const int DEFAULT_MAX = 100;
+const int DEFAULT_GRID_PITCH = 10;
+const char DEFAULT_FONT_FAMILY[] = "Arial";
 const int DEFAULT_FONT_SIZE = 12;
+const int LABEL_MARGIN = 2;
 
+/**
+* The QSimpleTickerGraph class implements a basic ticker graph, which may be
+* useful for visualizing data such as price or temperature as it changes over time.
+*/
 QSimpleTickerGraph::QSimpleTickerGraph(QWidget *parent) : QWidget(parent),
     mDataCount(0),
-    mMin(0),
-    mMax(100),
-    mBackgroundBrush(QBrush(Qt::white)),
+    mMin(DEFAULT_MIN),
+    mMax(DEFAULT_MAX),
+    mBackgroundBrush(QBrush(Qt::black)),
     mGridPen(QColor(0, 128, 64)),
+    mGridPitch(DEFAULT_GRID_PITCH),
     mDataLinePen(QColor(0, 255, 0)),
-    mLabelFont("Arial", DEFAULT_FONT_SIZE)
+    mLabelFont(DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
 {
 }
 
+/**
+* Paint event handler
+*/
 void QSimpleTickerGraph::paintEvent(QPaintEvent*)
 {
+    const double scale = height() / (mMax - mMin);
     QPainter painter(this);
 
     // Draw the background
-    painter.setBrush(mBackgroundBrush);
-    painter.fillRect(rect(), Qt::SolidPattern);
+    painter.fillRect(rect(), mBackgroundBrush);
 
     // Draw the grid lines
     painter.setPen(mGridPen);
-    for (int x = -mDataCount % GRAPH_GRID_PITCH;
-         x < width();
-         x += GRAPH_GRID_PITCH)
+    for (int x = -mDataCount % mGridPitch; x < width(); x += mGridPitch)
         painter.drawLine(QPointF(x, 0), QPoint(x, height()));
 
-    for (int y = 0;
-         y < height();
-         y += GRAPH_GRID_PITCH)
+    for (int y = 0; y < height(); y += mGridPitch)
         painter.drawLine(QPointF(0, y), QPoint(width(), y));
-
-    double scale = height() / (mMax - mMin);
 
     // Draw the data lines
     painter.setPen(mDataLinePen);
-    for (int i = 1;
-         i < mData.size();
-         i++)
+    for (int i = 1; i < mData.size(); ++ i)
     {
-        double prev = height() - scale * (mData.at(i-1) - mMin);
-        double val = height() - scale * (mData.at(i) - mMin);
-        painter.drawLine(QPointF(width() - mData.size() + i-1, prev), QPointF(width() - mData.size() + i, val));
+        qreal prev = height() - scale * (mData.at(i-1) - mMin);
+        qreal val = height() - scale * (mData.at(i) - mMin);
+        qreal x = width() - mData.size() + i;
+        painter.drawLine(QPointF(x - 1.0, prev), QPointF(x, val));
     }
 
     // Draw the current value as text
@@ -61,23 +65,19 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
     }
 }
 
-void QSimpleTickerGraph::appendPoint(double point)
+/**
+* The units to be displayed along with the current value
+*/
+QString QSimpleTickerGraph::units() const
 {
-    mData.enqueue(point);
-    if (mData.size() > width())
-        mData.dequeue();
-    mDataCount ++;
-
-    update();
+    return mUnits;
 }
 
-void QSimpleTickerGraph::clear()
-{
-    mData.clear();
-    mDataCount = 0;
-    update();
-}
-
+/**
+* Specifies the units to be displayed along with the current value.
+* For example, if the graph is to display voltage:
+*     graph->setUnits("V")
+*/
 void QSimpleTickerGraph::setUnits(const QString& units)
 {
     if (units != mUnits)
@@ -88,14 +88,27 @@ void QSimpleTickerGraph::setUnits(const QString& units)
     }
 }
 
-QString QSimpleTickerGraph::units() const
+/**
+* The range of the data that the graph is meant to display
+*/
+QPair<double, double> QSimpleTickerGraph::range() const
 {
-    return mUnits;
+    return QPair<double, double>(mMin, mMax);
 }
 
+/**
+* Sets the range of data that this graph is meant to display.
+* This is used to scale the graph appropriately. For instance,
+* if one executes
+*    graph->setRange(0, 100)
+* and then executes
+*    graph->addPoint(100)
+* then the added point will appear at top of the visibile graph.
+* The default range is [0, 100] if no other range is specified.
+*/
 void QSimpleTickerGraph::setRange(double min, double max)
 {
-    if (min != mMin || max != mMax)
+    if ((min != mMin || max != mMax) && (mMax > mMin))
     {
         mMin = min;
         mMax = max;
@@ -104,11 +117,18 @@ void QSimpleTickerGraph::setRange(double min, double max)
     }
 }
 
-QPair<double, double> QSimpleTickerGraph::range() const
+/**
+* The brush used to fill the background of the graph.
+*/
+QBrush QSimpleTickerGraph::backgroundBrush() const
 {
-    return QPair<double, double>(mMin, mMax);
+    return mBackgroundBrush;
 }
 
+/**
+* Sets the brush used to fill the background of the graph.
+* The default brush is a solid fill black brush.
+*/
 void QSimpleTickerGraph::setBackgroundBrush(const QBrush& brush)
 {
     if (brush != mBackgroundBrush)
@@ -117,11 +137,19 @@ void QSimpleTickerGraph::setBackgroundBrush(const QBrush& brush)
         update();
     }
 }
-QBrush QSimpleTickerGraph::backgroundBrush() const
+
+/**
+* The pen used to draw the grid lines.
+*/
+QPen QSimpleTickerGraph::gridPen() const
 {
-    return mBackgroundBrush;
+    return mGridPen;
 }
 
+/**
+* Sets the pen used to draw the grid lines.
+* The default pen is a single pixel wide and green.
+*/
 void QSimpleTickerGraph::setGridPen(const QPen& pen)
 {
     if (pen != mGridPen)
@@ -130,10 +158,39 @@ void QSimpleTickerGraph::setGridPen(const QPen& pen)
         update();
     }
 }
-QPen QSimpleTickerGraph::gridPen() const
+
+/**
+* The spacing between adjacent horizontal or vertical grid lines
+*/
+int QSimpleTickerGraph::gridPitch() const
 {
-    return mGridPen;
+    return mGridPitch;
 }
+
+/**
+* Sets the spacing between adjacent horizontal or vertical grid lines.
+*/
+void QSimpleTickerGraph::setGridPitch(int pitch)
+{
+    if (pitch != mGridPitch)
+    {
+        mGridPitch = pitch;
+        update();
+    }
+}
+
+/**
+* The pen used for drawing grid lines on the graph.
+*/
+QPen QSimpleTickerGraph::dataLinePen() const
+{
+    return mDataLinePen;
+}
+
+/**
+* Sets the pen used for drawing the data lines on the graph.
+* The default pen is a single pixel wide and green.
+*/
 void QSimpleTickerGraph::setDataLinePen(const QPen& pen)
 {
     if (pen != mDataLinePen)
@@ -143,10 +200,20 @@ void QSimpleTickerGraph::setDataLinePen(const QPen& pen)
             update();
     }
 }
-QPen QSimpleTickerGraph::dataLinePen() const
+
+/**
+* The font used for drawing the current value label.
+*/
+QFont QSimpleTickerGraph::labelFont() const
 {
-    return mDataLinePen;
+    return mLabelFont;
 }
+
+/**
+* Sets the font used for drawing the current value label at
+* the top left corner of the graph.
+* The default font is 12pt Arial.
+*/
 void QSimpleTickerGraph::setLabelFont(const QFont& font)
 {
     if (font != mLabelFont)
@@ -156,7 +223,28 @@ void QSimpleTickerGraph::setLabelFont(const QFont& font)
             update();
     }
 }
-QFont QSimpleTickerGraph::labelFont() const
+
+/**
+* Appends a new data point to the graph, and redraws the graph with
+* the new point added to the right edge.
+*/
+void QSimpleTickerGraph::appendPoint(double point)
 {
-    return mLabelFont;
+    mData.enqueue(point);
+    if (mData.size() > width())
+        mData.dequeue();
+    ++ mDataCount;
+
+    update();
 }
+
+/**
+* Clears all of the data from the graph and redraws the graph with no data
+*/
+void QSimpleTickerGraph::clear()
+{
+    mData.clear();
+    mDataCount = 0;
+    update();
+}
+

@@ -36,6 +36,15 @@ public:
     QPen dataLinePen() const;
     void setDataLinePen(const QPen& pen);
 
+    QColor axisColor() const;
+    void setAxisColor(const QColor& color);
+
+    QFont axisFont() const;
+    void setAxisFont(const QFont& font);
+
+    QColor labelColor() const;
+    void setLabelColor(const QColor& color);
+
     QFont labelFont() const;
     void setLabelFont(const QFont& font);
 
@@ -58,6 +67,9 @@ private:
     QPen mGridPen;
     int mGridPitch;
     QPen mDataLinePen;
+    QColor mAxisColor;
+    QFont mAxisFont;
+    QColor mLabelColor;
     QFont mLabelFont;
 };
 

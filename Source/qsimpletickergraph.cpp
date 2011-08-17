@@ -4,8 +4,11 @@
 const int DEFAULT_MIN = 0;
 const int DEFAULT_MAX = 100;
 const int DEFAULT_GRID_PITCH = 10;
-const char DEFAULT_FONT_FAMILY[] = "Arial";
-const int DEFAULT_FONT_SIZE = 12;
+const char DEFAULT_LABEL_FONT_FAMILY[] = "Arial";
+const int DEFAULT_LABEL_FONT_SIZE = 12;
+const char DEFAULT_AXIS_FONT_FAMILY[] = "Arial";
+const int DEFAULT_AXIS_FONT_SIZE = 8;
+const Qt::GlobalColor DEFAULT_LABEL_COLOR = Qt::white;
 const int LABEL_MARGIN = 2;
 
 /**
@@ -20,7 +23,10 @@ QSimpleTickerGraph::QSimpleTickerGraph(QWidget *parent) : QWidget(parent),
     mGridPen(QColor(0, 128, 64)),
     mGridPitch(DEFAULT_GRID_PITCH),
     mDataLinePen(QColor(0, 255, 0)),
-    mLabelFont(DEFAULT_FONT_FAMILY, DEFAULT_FONT_SIZE)
+    mAxisColor(DEFAULT_LABEL_COLOR),
+    mAxisFont(DEFAULT_AXIS_FONT_FAMILY, DEFAULT_AXIS_FONT_SIZE),
+    mLabelColor(DEFAULT_LABEL_COLOR),
+    mLabelFont(DEFAULT_LABEL_FONT_FAMILY, DEFAULT_LABEL_FONT_SIZE)
 {
 }
 
@@ -53,15 +59,23 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
         painter.drawLine(QPointF(x - 1.0, prev), QPointF(x, val));
     }
 
+    // Draw the min and max values in the left margin
+    painter.setPen(mAxisColor);
+    painter.setFont(mAxisFont);
+    QString minLabel = QString("%1 %2").arg(mMin).arg(mUnits);
+    QString maxLabel = QString("%1 %2").arg(mMax).arg(mUnits);
+    painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignTop | Qt::AlignLeft, maxLabel);
+    painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignBottom | Qt::AlignLeft, minLabel);
+
     // Draw the current value as text
     if (!mData.isEmpty())
     {
         QString current = QString("%1 %2")
                           .arg(mData.last(), 3, 'f', 3)
                           .arg(mUnits);
-        painter.setPen(Qt::white);
+        painter.setPen(mLabelColor);
         painter.setFont(mLabelFont);
-        painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignTop | Qt::AlignLeft, current);
+        painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignTop | Qt::AlignRight, current);
     }
 }
 
@@ -202,6 +216,26 @@ void QSimpleTickerGraph::setDataLinePen(const QPen& pen)
 }
 
 /**
+* The color for the value label.
+*/
+QColor QSimpleTickerGraph::labelColor() const
+{
+    return mLabelColor;
+}
+
+/**
+* Sets the color for the value label. The default color is white.
+*/
+void QSimpleTickerGraph::setLabelColor(const QColor& color)
+{
+    if (color != mLabelColor)
+    {
+        mLabelColor = color;
+        update();
+    }
+}
+
+/**
 * The font used for drawing the current value label.
 */
 QFont QSimpleTickerGraph::labelFont() const
@@ -221,6 +255,48 @@ void QSimpleTickerGraph::setLabelFont(const QFont& font)
         mLabelFont = font;
         if (!mData.isEmpty())
             update();
+    }
+}
+
+/**
+* The color used to draw the min and max value labels on the vertical axis.
+*/
+QColor QSimpleTickerGraph::axisColor() const
+{
+    return mAxisColor;
+}
+
+/**
+* Sets the color used for the min and max value labels on the vertical
+* axis. The default color used is white.
+*/
+void QSimpleTickerGraph::setAxisColor(const QColor& color)
+{
+    if (color != mAxisColor)
+    {
+        mAxisColor = color;
+        update();
+    }
+}
+
+/**
+* The font used for the min and max value labels on the vertical axis.
+*/
+QFont QSimpleTickerGraph::axisFont() const
+{
+    return mAxisFont;
+}
+
+/**
+* Sets the font used for the min and max value labels on the vertical axis.
+* The default font is 8pt Arial.
+*/
+void QSimpleTickerGraph::setAxisFont(const QFont& font)
+{
+    if (font != mAxisFont)
+    {
+        mAxisFont = font;
+        update();
     }
 }
 

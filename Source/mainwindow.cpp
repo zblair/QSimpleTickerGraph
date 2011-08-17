@@ -15,12 +15,17 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     mUi->setupUi(this);
 
-    // Configure the graphs
+    // Configure the graphs. The voltage graph is an example of a graph
+    // that has been heavily customized, whereas the temperature graph
+    // is hardly customized at all.
     mUi->voltageGraph->setUnits("V");
     mUi->voltageGraph->setRange(0, 200);
-    mUi->voltageGraph->setDataLinePen(QPen(QColor(255,255,0), 5));
-    mUi->voltageGraph->setBackgroundBrush(QBrush(QColor(32, 32, 32)));
-    mUi->voltageGraph->setGridPen(QPen(QColor(32, 128, 32), 1, Qt::DotLine));
+    mUi->voltageGraph->setDataLinePen(QPen(QColor(0,0,0), 2));
+    mUi->voltageGraph->setBackgroundBrush(QBrush(QColor(255, 255, 255)));
+    mUi->voltageGraph->setGridPitch(50);
+    mUi->voltageGraph->setGridPen(QPen(QColor(32, 32, 32), 1, Qt::DotLine));
+    mUi->voltageGraph->setAxisColor(QColor(32, 32, 32));
+    mUi->voltageGraph->setLabelColor(QColor(32, 32, 32));
 
     mUi->temperatureGraph->setUnits("°C");
     mUi->temperatureGraph->setRange(10, 30);

@@ -16,6 +16,7 @@ const int LABEL_MARGIN = 2;
 * useful for visualizing data such as price or temperature as it changes over time.
 */
 QSimpleTickerGraph::QSimpleTickerGraph(QWidget *parent) : QWidget(parent),
+    mPointWidth(1),
     mDataCount(0),
     mMin(DEFAULT_MIN),
     mMax(DEFAULT_MAX),
@@ -35,28 +36,35 @@ QSimpleTickerGraph::QSimpleTickerGraph(QWidget *parent) : QWidget(parent),
 */
 void QSimpleTickerGraph::paintEvent(QPaintEvent*)
 {
-    const double scale = height() / (mMax - mMin);
+    const double scale = (mMax > mMin) ? (height() / (mMax - mMin)) : 1.0;
     QPainter painter(this);
 
     // Draw the background
     painter.fillRect(rect(), mBackgroundBrush);
 
+    // If there are any reference points defined, make sure a grid line goes through the first one
+    int gridOffset = 0;
+    if (!mReferencePoints.isEmpty())
+    {
+        gridOffset = height() - scale * (mReferencePoints.first() - mMin);
+    }
+
     // Draw the grid lines
     painter.setPen(mGridPen);
-    for (int x = -mDataCount % mGridPitch; x < width(); x += mGridPitch)
+    for (int x = -(mDataCount * mPointWidth) % mGridPitch; x < width(); x += mGridPitch)
         painter.drawLine(QPointF(x, 0), QPoint(x, height()));
 
-    for (int y = 0; y < height(); y += mGridPitch)
+    for (int y = -mGridPitch + gridOffset % mGridPitch; y < height(); y += mGridPitch)
         painter.drawLine(QPointF(0, y), QPoint(width(), y));
 
     // Draw the data lines
     painter.setPen(mDataLinePen);
     for (int i = 1; i < mData.size(); ++ i)
     {
-        qreal prev = height() - scale * (mData.at(i-1) - mMin);
+        qreal prev = height() - scale * (mData.at(i - 1) - mMin);
         qreal val = height() - scale * (mData.at(i) - mMin);
-        qreal x = width() - mData.size() + i;
-        painter.drawLine(QPointF(x - 1.0, prev), QPointF(x, val));
+        qreal x = width() - mPointWidth * mData.size() + mPointWidth * i;
+        painter.drawLine(QPointF(x - mPointWidth, prev), QPointF(x, val));
     }
 
     // Draw the min and max values in the left margin
@@ -66,6 +74,17 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
     QString maxLabel = QString("%1 %2").arg(mMax).arg(mUnits);
     painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignTop | Qt::AlignLeft, maxLabel);
     painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignBottom | Qt::AlignLeft, minLabel);
+
+    // Draw the reference labels, if any
+    int axisLabelHeight = QFontMetrics(mAxisFont).height();
+    foreach(double point, mReferencePoints)
+    {
+        double y = height() - scale * (point - mMin);
+
+        QString label = QString("%1 %2").arg(point).arg(mUnits);
+        painter.drawText(QRect(LABEL_MARGIN, y - axisLabelHeight/2, width() - LABEL_MARGIN, axisLabelHeight), Qt::AlignVCenter | Qt::AlignLeft, label);
+    }
+
 
     // Draw the current value as text
     if (!mData.isEmpty())
@@ -128,6 +147,49 @@ void QSimpleTickerGraph::setRange(double min, double max)
         mMax = max;
         if (!mData.isEmpty())
             update();
+    }
+}
+
+/**
+* Sets the range of data that this graph is meant to display.
+*/
+void QSimpleTickerGraph::setRange(const QPair<double, double>& range)
+{
+    setRange(range.first, range.second);
+}
+
+int QSimpleTickerGraph::pointWidth() const
+{
+    return mPointWidth;
+}
+
+void QSimpleTickerGraph::setPointWidth(int w)
+{
+    if (w != mPointWidth)
+    {
+        mPointWidth = w;
+        if (!mData.isEmpty())
+            update();
+    }
+}
+
+/**
+* A list of levels, aside from the min and max, that should be labelled on the graph.
+*/
+QList<double> QSimpleTickerGraph::referencePoints() const
+{
+    return mReferencePoints;
+}
+
+/**
+* Sets the list of levels, aside from the min and max, that should be labelled on the graph.
+*/
+void QSimpleTickerGraph::setReferencePoints(const QList<double>& points)
+{
+    if (points != mReferencePoints)
+    {
+        mReferencePoints = points;
+        update();
     }
 }
 
@@ -307,7 +369,7 @@ void QSimpleTickerGraph::setAxisFont(const QFont& font)
 void QSimpleTickerGraph::appendPoint(double point)
 {
     mData.enqueue(point);
-    if (mData.size() > width())
+    if (mPointWidth * mData.size() > width())
         mData.dequeue();
     ++ mDataCount;
 

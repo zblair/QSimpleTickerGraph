@@ -26,6 +26,7 @@ private:
 
     double mVoltage;
     double mTemperature;
+    double mSpeed;
 };
 
 #endif // MAINWINDOW_H

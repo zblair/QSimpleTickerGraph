@@ -21,7 +21,14 @@ public:
     void setUnits(const QString& unit);
 
     QPair<double, double> range() const;
+    void setRange(const QPair<double, double>& p);
     void setRange(double min, double max);
+
+    int pointWidth() const;
+    void setPointWidth(int w);
+
+    QList<double> referencePoints() const;
+    void setReferencePoints(const QList<double>& points);
 
     // Style-related parameters
     QBrush backgroundBrush() const;
@@ -55,8 +62,12 @@ public:
 private:
     // Data points
     QQueue<double> mData;
+    int mPointWidth;
     int mDataCount;
     QString mUnits;
+
+    // Reference points
+    QList<double> mReferencePoints;
 
     // Data range visible in graph
     double mMin;

@@ -1,15 +1,18 @@
 #include <QtGui/QPainter>
 #include "qsimpletickergraph.h"
 
-const int DEFAULT_MIN = 0;
-const int DEFAULT_MAX = 100;
-const int DEFAULT_GRID_PITCH = 10;
-const char DEFAULT_LABEL_FONT_FAMILY[] = "Arial";
-const int DEFAULT_LABEL_FONT_SIZE = 12;
-const char DEFAULT_AXIS_FONT_FAMILY[] = "Arial";
-const int DEFAULT_AXIS_FONT_SIZE = 8;
-const Qt::GlobalColor DEFAULT_LABEL_COLOR = Qt::white;
-const int LABEL_MARGIN = 2;
+namespace
+{
+    const int DEFAULT_MIN = 0;
+    const int DEFAULT_MAX = 100;
+    const int DEFAULT_GRID_PITCH = 10;
+    const char DEFAULT_LABEL_FONT_FAMILY[] = "Arial";
+    const int DEFAULT_LABEL_FONT_SIZE = 12;
+    const char DEFAULT_AXIS_FONT_FAMILY[] = "Arial";
+    const int DEFAULT_AXIS_FONT_SIZE = 8;
+    const Qt::GlobalColor DEFAULT_LABEL_COLOR = Qt::white;
+    const int LABEL_MARGIN = 2;
+}
 
 /**
 * The QSimpleTickerGraph class implements a basic ticker graph, which may be
@@ -76,7 +79,7 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
     painter.drawText(rect().adjusted(LABEL_MARGIN, LABEL_MARGIN, -LABEL_MARGIN, -LABEL_MARGIN), Qt::AlignBottom | Qt::AlignLeft, minLabel);
 
     // Draw the reference labels, if any
-    int axisLabelHeight = QFontMetrics(mAxisFont).height();
+    const int axisLabelHeight = QFontMetrics(mAxisFont).height();
     foreach(double point, mReferencePoints)
     {
         double y = height() - scale * (point - mMin);
@@ -84,7 +87,6 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
         QString label = QString("%1 %2").arg(point).arg(mUnits);
         painter.drawText(QRect(LABEL_MARGIN, y - axisLabelHeight/2, width() - LABEL_MARGIN, axisLabelHeight), Qt::AlignVCenter | Qt::AlignLeft, label);
     }
-
 
     // Draw the current value as text
     if (!mData.isEmpty())
@@ -158,11 +160,17 @@ void QSimpleTickerGraph::setRange(const QPair<double, double>& range)
     setRange(range.first, range.second);
 }
 
+/**
+* The horizontal distance between consecutive data points.
+*/
 int QSimpleTickerGraph::pointWidth() const
 {
     return mPointWidth;
 }
 
+/**
+* Sets the horizontal distance between consecutive data points.
+*/
 void QSimpleTickerGraph::setPointWidth(int w)
 {
     if (w != mPointWidth)

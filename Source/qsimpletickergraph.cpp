@@ -3,9 +3,9 @@
 
 namespace
 {
-    const int DEFAULT_MIN = 0;
-    const int DEFAULT_MAX = 100;
-    const int DEFAULT_GRID_PITCH = 10;
+    const double DEFAULT_MIN = 0.0;
+    const double DEFAULT_MAX = 100.0;
+    const double DEFAULT_GRID_PITCH = 10.0;
     const char DEFAULT_LABEL_FONT_FAMILY[] = "Arial";
     const int DEFAULT_LABEL_FONT_SIZE = 12;
     const char DEFAULT_AXIS_FONT_FAMILY[] = "Arial";
@@ -53,20 +53,25 @@ void QSimpleTickerGraph::paintEvent(QPaintEvent*)
     }
 
     // Draw the grid lines
-    painter.setPen(mGridPen);
-    for (int x = -(mDataCount * mPointWidth) % mGridPitch; x < width(); x += mGridPitch)
-        painter.drawLine(QPointF(x, 0), QPoint(x, height()));
+    const int pitchInPixels = scale * mGridPitch;
+    if (pitchInPixels > 0)
+    {
+		painter.setPen(mGridPen);
+		for (int x = -(mDataCount * mPointWidth) % pitchInPixels; x < width(); x += pitchInPixels)
+			painter.drawLine(QPointF(x, 0), QPoint(x, height()));
 
-    for (int y = -mGridPitch + gridOffset % mGridPitch; y < height(); y += mGridPitch)
-        painter.drawLine(QPointF(0, y), QPoint(width(), y));
+		for (int y = -pitchInPixels + gridOffset % pitchInPixels; y < height(); y += pitchInPixels)
+			painter.drawLine(QPointF(0, y), QPoint(width(), y));
+	}
 
     // Draw the data lines
     painter.setPen(mDataLinePen);
+    const int dataWidth = mPointWidth * (mData.size() - 1);
     for (int i = 1; i < mData.size(); ++ i)
     {
         qreal prev = height() - scale * (mData.at(i - 1) - mMin);
         qreal val = height() - scale * (mData.at(i) - mMin);
-        qreal x = width() - mPointWidth * mData.size() + mPointWidth * i;
+        qreal x = width() - dataWidth + mPointWidth * i;
         painter.drawLine(QPointF(x - mPointWidth, prev), QPointF(x, val));
     }
 
@@ -124,7 +129,8 @@ void QSimpleTickerGraph::setUnits(const QString& units)
 }
 
 /**
-* The range of the data that the graph is meant to display
+* The range of the data that the graph is meant to display.
+* The default range is [0, 100]
 */
 QPair<double, double> QSimpleTickerGraph::range() const
 {
@@ -161,7 +167,7 @@ void QSimpleTickerGraph::setRange(const QPair<double, double>& range)
 }
 
 /**
-* The horizontal distance between consecutive data points.
+* The horizontal distance in pixels between consecutive data points.
 */
 int QSimpleTickerGraph::pointWidth() const
 {
@@ -169,7 +175,7 @@ int QSimpleTickerGraph::pointWidth() const
 }
 
 /**
-* Sets the horizontal distance between consecutive data points.
+* Sets the horizontal distance in pixels between consecutive data points.
 */
 void QSimpleTickerGraph::setPointWidth(int w)
 {
@@ -244,17 +250,19 @@ void QSimpleTickerGraph::setGridPen(const QPen& pen)
 }
 
 /**
-* The spacing between adjacent horizontal or vertical grid lines
+* The spacing between adjacent horizontal or vertical grid lines,
+* in the same units as the data values. The default is 10.
 */
-int QSimpleTickerGraph::gridPitch() const
+double QSimpleTickerGraph::gridPitch() const
 {
     return mGridPitch;
 }
 
 /**
-* Sets the spacing between adjacent horizontal or vertical grid lines.
+* Sets the spacing between adjacent horizontal or vertical grid lines,
+* in the same units as the data values. The default is 10.
 */
-void QSimpleTickerGraph::setGridPitch(int pitch)
+void QSimpleTickerGraph::setGridPitch(double pitch)
 {
     if (pitch != mGridPitch)
     {
@@ -377,7 +385,8 @@ void QSimpleTickerGraph::setAxisFont(const QFont& font)
 void QSimpleTickerGraph::appendPoint(double point)
 {
     mData.enqueue(point);
-    if (mPointWidth * mData.size() > width())
+    const int dataWidth = mPointWidth * (mData.size() - 1);
+    if (dataWidth >= (width() + mPointWidth))
         mData.dequeue();
     ++ mDataCount;
 

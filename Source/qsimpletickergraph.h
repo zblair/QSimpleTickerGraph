@@ -37,8 +37,8 @@ public:
     QPen gridPen() const;
     void setGridPen(const QPen& pen);
 
-    int gridPitch() const;
-    void setGridPitch(int pitch);
+    double gridPitch() const;
+    void setGridPitch(double pitch);
 
     QPen dataLinePen() const;
     void setDataLinePen(const QPen& pen);
@@ -76,7 +76,7 @@ private:
     // Style
     QBrush mBackgroundBrush;
     QPen mGridPen;
-    int mGridPitch;
+    double mGridPitch;
     QPen mDataLinePen;
     QColor mAxisColor;
     QFont mAxisFont;
